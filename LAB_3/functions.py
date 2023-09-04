@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from nltk.lm import MLE
+from nltk.lm.api import LanguageModel
 from itertools import chain
 from nltk.lm import StupidBackoff
 from nltk.lm import NgramCounter
@@ -24,17 +24,16 @@ def inst_backoffs(macbeth_sents, macbeth_words, backoff_order = 2):
     return stupid_backoff, myBackoff
 
 
-class MyBackoff(MLE):
+class MyBackoff(LanguageModel):
     def __init__(self, alpha = 0.4, order = 2, vocabulary = None, counter = None):
-        super().__init__(order, vocabulary) 
+        super().__init__(order=order, vocabulary=vocabulary, counter=counter) 
         self.alpha = alpha
-        self.counter = counter
 
     def unmasked_score(self, word, context = None):
         if context is None or len(context) == 0:
-            return self.counter[word] / self.counter.N()
-        if self.counter[context][word] > 0:
-            return self.counter[context][word] / self.counter[context].N()
+            return self.counts.unigrams.freq(word)
+        if self.counts[context][word] > 0:
+            return self.counts[context][word] / self.counts[context].N()
         else:
             return self.alpha * self.unmasked_score(word, context[1:])
             
