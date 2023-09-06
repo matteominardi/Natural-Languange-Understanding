@@ -1,73 +1,29 @@
 from functions import *
-import math
 import nltk
-from nltk.corpus import treebank
-from nltk.tag import NgramTagger
-nltk.download('treebank')
 import spacy
 from spacy.tokens import Doc
 from nltk.metrics import accuracy
 
-print("Splitting data for train (+val) and test")
-print('Dataset total size: ', len(treebank.tagged_sents()))
-trn_data = treebank.tagged_sents(tagset='universal')[:math.ceil(len(treebank.tagged_sents()) * 0.8)]
-tst_data = treebank.tagged_sents(tagset='universal')[math.ceil(len(treebank.tagged_sents()) * 0.8):]
-print("Train length and test length", len(trn_data), len(tst_data))
-val_data = trn_data[-len(trn_data)//10:]
-trn_data = trn_data[:-len(trn_data)//10]
-print("Train length, val length, test length", len(trn_data), len(val_data), len(tst_data))
+print("Splitting data for train (+ validation) and test")
+trn_data, val_data, tst_data = split_data()
 
-print("\n\nExperimenting with different tagger parameters")
-unigram_tagger = NgramTagger(1, train = trn_data, cutoff = 1)
-bigram_tagger = NgramTagger(2, train = trn_data, cutoff = 1)
-trigram_tagger = NgramTagger(3, train = trn_data, cutoff = 1)
-print('BASELINE')
-print('Accuracy: ', unigram_tagger.accuracy(val_data), bigram_tagger.accuracy(val_data), trigram_tagger.accuracy(val_data))
-print('------------------------------------------------------------------')
+print("\n\n(NLTK) Experimenting with different tagger parameters")
+experiment("BASELINE", trn_data, val_data, tst_data, 1)
+experiment("HIGHER CUTOFF", trn_data, val_data, tst_data, 2)
+experiment("BACKOFF WITH NO DEFAULT TAGGER", trn_data, val_data, tst_data, 1, True)
+experiment("BACKOFF WITH DEFAULT TAGGER", trn_data, val_data, tst_data, 1, True, nltk.DefaultTagger('NOUN'))
 
-unigram_tagger = NgramTagger(1, train = trn_data, cutoff = 2)
-bigram_tagger = NgramTagger(2, train = trn_data, cutoff = 2)
-trigram_tagger = NgramTagger(3, train = trn_data, cutoff = 2)
-print('HIGHER CUTOFF')
-print('Accuracy: ', unigram_tagger.accuracy(val_data), bigram_tagger.accuracy(val_data), trigram_tagger.accuracy(val_data))
-print('------------------------------------------------------------------')
+print("------------------------------------------------------------------")
+print("------------------------------------------------------------------")
 
-unigram_tagger = NgramTagger(1, train = trn_data, cutoff = 1)
-bigram_tagger = NgramTagger(2, train = trn_data, cutoff = 1, backoff = unigram_tagger)
-trigram_tagger = NgramTagger(3, train = trn_data, cutoff = 1, backoff = bigram_tagger)
-print('BACKOFF WITH NO DEFAULT TAGGER')
-print('Accuracy: ', unigram_tagger.accuracy(val_data), bigram_tagger.accuracy(val_data), trigram_tagger.accuracy(val_data))
-print('------------------------------------------------------------------')
+print("\n\n(Spacy) Experimenting with Spacy tagger")
+tst_data_words = extract_words_only(tst_data)
 
-default_tagger = nltk.DefaultTagger('NOUN')
-unigram_tagger = NgramTagger(1, train = trn_data, cutoff = 1, backoff = default_tagger)
-bigram_tagger = NgramTagger(2, train = trn_data, cutoff = 1, backoff = unigram_tagger)
-trigram_tagger = NgramTagger(3, train = trn_data, cutoff = 1, backoff = bigram_tagger)
-print('FINAL VALIDATION Accuracy: ', trigram_tagger.accuracy(val_data))
-print('------------------------------------------------------------------')
+nlp = spacy.load("en_core_web_sm")
+doc = Doc(nlp.vocab, words=tst_data_words)
+doc = nlp(doc)
 
-print('TEST Accuracy: ', trigram_tagger.accuracy(tst_data))
-print('------------------------------------------------------------------')
-print('------------------------------------------------------------------')
-print('------------------------------------------------------------------')
-print('------------------------------------------------------------------')
-print('------------------------------------------------------------------')
-nlp = spacy.load('en_core_web_sm')
-tst_data_words = []
-
-for l in tst_data:
-    for pair in l:
-        tst_data_words.append(pair[0])
-
-print(len(tst_data_words), tst_data_words)
-
-tmp = Doc(nlp.vocab, words=tst_data_words)
-doc = nlp(tmp)
-
-res = []
-for token in doc:
-    res.append((token.text, token.pos_))
-print(len(res), res)
+spacy_res = extract_token_text_pos_pair(doc)
 
 mapping_spacy_to_NLTK = {
     "ADJ": "ADJ",
@@ -89,17 +45,8 @@ mapping_spacy_to_NLTK = {
     "X": "X"
 }
 
-mapped_res = []
-for tup in res:
-    mapped_res.append((tup[0], mapping_spacy_to_NLTK[tup[1]]))
-print('MAPPED spacy output to NLTK format')
-print(mapped_res)
-print('------------------------------------------------------------------')
+mapped_spacy_res = map_spacy_to_NLTK(spacy_res, mapping_spacy_to_NLTK)
 
 ref_tst_data = [tup for l in tst_data for tup in l]
-print('Reference test data')
-print(ref_tst_data)
-print('------------------------------------------------------------------')
-
-print('Lengths: ', len(ref_tst_data), len(mapped_res))
-print('Accuracy: ', accuracy(reference = ref_tst_data, test = mapped_res))
+print("------------------------------------------------------------------")
+print("Spacy Final Test Accuracy:", accuracy(reference = ref_tst_data, test = mapped_spacy_res))
