@@ -255,5 +255,20 @@ for i, inst in enumerate(senseval.instances('interest.pos')):
     hyps1_list.append(hyp1)
     hyps2_list.append(hyp2)
 
+from sklearn.metrics import precision_score, recall_score, f1_score
+
 print("Acc original_lesk:", round(accuracy(refs_list, hyps1_list), 3))
+print('Precision: %.3f' % precision_score(refs_list, hyps1_list, average='macro'))
+print('Recall: %.3f' % recall_score(refs_list, hyps1_list, average='macro'))
+print('F1: %.3f' % f1_score(refs_list, hyps1_list, average='macro'))
+print('Precision: %.3f' % precision_score(refs_list, hyps1_list, average='weighted'))
+print('Recall: %.3f' % recall_score(refs_list, hyps1_list, average='weighted'))
+print('F1: %.3f' % f1_score(refs_list, hyps1_list, average='weighted'))
+print("----------------------------------------------------------------")
 print("Acc lesk_similarity:", round(accuracy(refs_list, hyps2_list), 3))
+print('Precision: %.3f' % precision_score(refs_list, hyps2_list, average='macro'))
+print('Recall: %.3f' % recall_score(refs_list, hyps2_list, average='macro'))
+print('F1: %.3f' % f1_score(refs_list, hyps2_list, average='macro'))
+print('Precision: %.3f' % precision_score(refs_list, hyps1_list, average='weighted'))
+print('Recall: %.3f' % recall_score(refs_list, hyps1_list, average='weighted'))
+print('F1: %.3f' % f1_score(refs_list, hyps1_list, average='weighted'))
