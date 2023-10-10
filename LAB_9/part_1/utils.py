@@ -151,12 +151,12 @@ def load_models(models_names):
     rnn_base = LM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"]).to(device)
     lstm_base = LM(emb_size, hid_size, vocab_len, lstm=True, pad_index=lang.word2id["<pad>"]).to(device)
     lstm_dropout = LM(emb_size, hid_size, vocab_len, lstm=True, dropout=True, pad_index=lang.word2id["<pad>"]).to(device)
-    lstm_dropout_adamw = LM(emb_size, hid_size, vocab_len, lstm=True, dropout=True, adamw=True, pad_index=lang.word2id["<pad>"]).to(device)
+    lstm_dropout_adamw = LM(emb_size, hid_size, vocab_len, lstm=True, dropout=True, pad_index=lang.word2id["<pad>"]).to(device)
 
     models = [rnn_base, lstm_base, lstm_dropout, lstm_dropout_adamw]
 
     for i in range(len(models_names)):
-        path = "/bin/" + models_names[i] + ".pt"
+        path = "bin/" + models_names[i] + ".pt"
         models[i].load_state_dict(torch.load(path))
 
     return models
