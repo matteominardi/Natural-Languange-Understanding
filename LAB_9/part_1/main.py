@@ -21,14 +21,14 @@ if just_test:
     test_PPL(models[3], test_loader, criterion_eval)
 else:
     print("PPL with RNN")
-    rnn_base = train_and_eval(lang, train_loader, dev_loader, test_loader)
+    rnn_base = train_and_eval(0.1, lang, train_loader, dev_loader, test_loader)
+    save_models([rnn_base], ["rnn_base"])
     print("PPL with LSTM")
-    lstm_base = train_and_eval(lang, train_loader, dev_loader, test_loader, lstm=True)
+    lstm_base = train_and_eval(1.0, lang, train_loader, dev_loader, test_loader, lstm=True)
+    save_models([lstm_base], ["lstm_base"])
     print("PPL with LSTM and dropout layers")
-    lstm_dropout = train_and_eval(lang, train_loader, dev_loader, test_loader, lstm=True, dropout=True)
+    lstm_dropout = train_and_eval(1.0, lang, train_loader, dev_loader, test_loader, lstm=True, dropout=True)
+    save_models([lstm_dropout], ["lstm_dropout"])
     print("PPL with LSTM and dropout layers and AdamW")
-    lstm_dropout_adamw = train_and_eval(lang, train_loader, dev_loader, test_loader, lstm=True, dropout=True, adamw=True)
-
-    models = [rnn_base, lstm_base, lstm_dropout, lstm_dropout_adamw]
-
-    save_models(models, models_names)
+    lstm_dropout_adamw = train_and_eval(0.01, lang, train_loader, dev_loader, test_loader, lstm=True, dropout=True, adamw=True)
+    save_models([lstm_dropout_adamw], ["lstm_dropout_adamw"])

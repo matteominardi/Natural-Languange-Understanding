@@ -17,11 +17,12 @@ class LM(nn.Module):
                 emb_dropout=0.1, 
                 n_layers=1):
         
+        self.dropout = dropout
         super(LM, self).__init__()
         self.embedding = nn.Embedding(output_size, emb_size, padding_idx=pad_index)
         
         if lstm:
-            self.lstm = nn.LSTM(emb_size, hidden_size, n_layers, bidirectional=False)
+            self.rnn = nn.LSTM(emb_size, hidden_size, n_layers, bidirectional=False)
         else:
             self.rnn = nn.RNN(emb_size, hidden_size, n_layers, bidirectional=False)
 
@@ -35,8 +36,12 @@ class LM(nn.Module):
 
     def forward(self, input_sequence):
         emb = self.embedding(input_sequence)
-        rnn_out, _  = self.rnn(emb)
-        output = self.output(rnn_out).permute(0,2,1)
+        if self.dropout:
+            emb = self.emb_dropout(emb)
+        out, _ = self.rnn(emb)
+        if self.dropout:
+            out = self.out_dropout(out)
+        output = self.output(out).permute(0,2,1)
         
         return output
     

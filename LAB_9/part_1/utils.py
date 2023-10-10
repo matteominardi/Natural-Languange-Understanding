@@ -83,15 +83,14 @@ def get_lang_loaders():
     return lang, train_loader, dev_loader, test_loader
 
 
-def train_and_eval(lang, train_loader, dev_loader, test_loader, lstm=False, dropout=False, adamw=False):
+def train_and_eval(lr, lang, train_loader, dev_loader, test_loader, lstm=False, dropout=False, adamw=False):
     hid_size = 200
     emb_size = 300
     vocab_len = len(lang.word2id)
-    device = 'cpu'
+    device = 'cuda:0'
     model = LM(emb_size, hid_size, vocab_len, lstm = lstm, dropout = dropout, pad_index=lang.word2id["<pad>"]).to(device)
     model.apply(init_weights)
-
-    lr = 1.0 
+ 
     clip = 5 
 
     if adamw:
@@ -138,7 +137,7 @@ def train_and_eval(lang, train_loader, dev_loader, test_loader, lstm=False, drop
 
 def save_models(models, models_names):
     for i in range(len(models)):
-        path = "/bin/" + models_names[i] + ".pt"
+        path = "bin/" + models_names[i] + ".pt"
         torch.save(models[i].state_dict(), path)
 
 
@@ -147,7 +146,7 @@ def load_models(models_names):
     hid_size = 200
     emb_size = 300
     vocab_len = len(lang.word2id)
-    device = 'cpu'
+    device = 'cuda:0'
 
     rnn_base = LM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"]).to(device)
     lstm_base = LM(emb_size, hid_size, vocab_len, lstm=True, pad_index=lang.word2id["<pad>"]).to(device)
