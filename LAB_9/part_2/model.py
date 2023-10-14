@@ -1,8 +1,22 @@
 from functions import cosine_similarity
+import torch
 import torch.nn as nn
 import numpy as np
 import numpy as np
 from numpy.linalg import norm
+
+
+class VariationalDropout(nn.Module):
+    def __init__(self, dropout_probability):
+        super(VariationalDropout, self).__init__()
+        self.dropout_probability = dropout_probability
+
+    def forward(self, x):
+        if self.training:
+            with torch.no_grad():
+                mask = torch.bernoulli(torch.ones_like(x) * (1 - self.dropout_prob)) / (1 - self.dropout_prob)
+                return x * mask
+        return x
 
 
 class LM(nn.Module):
@@ -13,6 +27,7 @@ class LM(nn.Module):
                 lstm=False,
                 dropout=False,
                 weight_tying=False, 
+                variational_dropout=False,
                 pad_index=0, 
                 out_dropout=0.1,
                 emb_dropout=0.1, 
@@ -30,8 +45,12 @@ class LM(nn.Module):
             self.rnn = nn.RNN(emb_size, hidden_size, n_layers, bidirectional=False)
 
         if dropout:
-            self.emb_dropout = nn.Dropout(emb_dropout)
-            self.out_dropout = nn.Dropout(out_dropout)
+            if variational_dropout:
+                self.emb_dropout = VariationalDropout(emb_dropout)
+                self.out_dropout = VariationalDropout(out_dropout)
+            else:
+                self.emb_dropout = nn.Dropout(emb_dropout)
+                self.out_dropout = nn.Dropout(out_dropout)
         
         self.pad_token = pad_index
         self.output = nn.Linear(hidden_size, output_size)
@@ -75,7 +94,6 @@ class Lang():
     def __init__(self, corpus, special_tokens=[]):
         self.word2id = self.get_vocab(corpus, special_tokens)
         self.id2word = {v:k for k, v in self.word2id.items()}
-
 
     def get_vocab(self, corpus, special_tokens=[]):
         output = {}
