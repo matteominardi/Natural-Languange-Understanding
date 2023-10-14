@@ -13,9 +13,8 @@ class VariationalDropout(nn.Module):
 
     def forward(self, x):
         if self.training:
-            with torch.no_grad():
-                mask = torch.bernoulli(torch.ones_like(x) * (1 - self.dropout_prob)) / (1 - self.dropout_prob)
-                return x * mask
+            mask = torch.bernoulli(torch.ones_like(x) * (1 - self.dropout_probability)) / (1 - self.dropout_probability)
+            return x * mask
         return x
 
 

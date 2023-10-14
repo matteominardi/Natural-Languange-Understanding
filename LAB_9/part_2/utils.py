@@ -78,7 +78,7 @@ def train_and_eval(lr, lang, train_loader, dev_loader, test_loader, lstm=True, d
     emb_size = 300
     vocab_len = len(lang.word2id)
     device = 'cuda:0'
-    model = LM(emb_size, hid_size, vocab_len, lstm = lstm, dropout = dropout, weight_tying=weight_tying, pad_index=lang.word2id["<pad>"]).to(device)
+    model = LM(emb_size, hid_size, vocab_len, lstm = lstm, dropout = dropout, weight_tying=weight_tying, variational_dropout=variational_dropout, pad_index=lang.word2id["<pad>"]).to(device)
     model.apply(init_weights)
  
     clip = 5 
