@@ -73,7 +73,8 @@ def train_and_eval(lr, lang, train_loader, dev_loader, test_loader, lstm=True, d
                    weight_tying=False,
                    variational_dropout=False, 
                    adamw=False,
-                   avsgd=False):
+                   ntavsgd=False,
+                   n = 5):
     hid_size = 200
     emb_size = 300
     vocab_len = len(lang.word2id)
@@ -92,27 +93,41 @@ def train_and_eval(lr, lang, train_loader, dev_loader, test_loader, lstm=True, d
     criterion_eval = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"], reduction='sum')
 
     n_epochs = 100
-    patience = 3
+    patience_amount = 3 if not ntavsgd else 10
+    patience = patience_amount
     losses_train = []
     losses_dev = []
     sampled_epochs = []
     best_ppl = math.inf
     best_model = None
     pbar = tqdm(range(1,n_epochs))
+    loss_logs = []
+    t = 0
 
     for epoch in pbar:
         loss = train_loop(train_loader, optimizer, criterion_train, model, clip)
+
+        if ntavsgd and len(loss_logs) >= n:
+            min_loss = min(loss_logs[-n-1:-1])
+            
+            if  loss_logs[-1] > min_loss:
+                t = t + 1
+                if t >= n: 
+                    print("\nSwtitched Optimizer")
+                    optimizer = torch.optim.ASGD(model.parameters(), lr=optimizer.param_groups[0]['lr'], t0=0, lambd=0.)
+                    ntavsgd = False
 
         if epoch % 1 == 0:
             sampled_epochs.append(epoch)
             losses_train.append(np.asarray(loss).mean())
             ppl_dev, loss_dev = eval_loop(dev_loader, criterion_eval, model)
+            loss_logs.append(ppl_dev)
             losses_dev.append(np.asarray(loss_dev).mean())
             pbar.set_description("PPL: %f" % ppl_dev)
             if  ppl_dev < best_ppl: # the lower, the better
                 best_ppl = ppl_dev
                 best_model = copy.deepcopy(model).to('cpu')
-                patience = 3
+                patience = patience_amount
             else:
                 patience -= 1
 

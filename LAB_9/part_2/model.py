@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 import numpy as np
-from numpy.linalg import norm
 
 
 class VariationalDropout(nn.Module):
