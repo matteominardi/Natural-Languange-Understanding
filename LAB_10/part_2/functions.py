@@ -15,28 +15,8 @@ def train_loop(data, optimizer, criterion_slots, criterion_intents, model):
     loss_array = []
     for sample in data:
         optimizer.zero_grad()  # Zeroing the gradient
-        # print("\n\nSample Ids")
-        # print(sample["ids"].size())
-        # print("\n\nSample masks")
-        # print(sample["mask"].size())
         slots, intent = model(sample["ids"], sample["mask"])
         loss_intent = criterion_intents(intent, sample["intents"])
-        # print("\n\n")
-        # print("intent")
-        # print(len(intent))
-        # print(intent.size())
-        # print(intent)
-        # print("\n\n")
-        # print("slots")
-        # print(len(slots))
-        # print(slots.size())
-        # print(slots)
-        # print("\n")
-        # print("y_slots")
-        # print(len(sample["y_slots"]))
-        # print(sample["y_slots"].size())
-        # print(sample["y_slots"])
-        # print("\n\n")
         loss_slot = criterion_slots(slots, sample["y_slots"])
         loss = loss_intent + loss_slot  # In joint training we sum the losses.
         # Is there another way to do that?
@@ -90,11 +70,6 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
         results = evaluate(ref_slots, hyp_slots)
     except Exception as ex:
         pass
-        # Sometimes the model predics a class that is not in REF
-        # print(ex)
-        # ref_s = set([x[1] for x in ref_slots])
-        # hyp_s = set([x[1] for x in hyp_slots])
-        # print(hyp_s.difference(ref_s))
         
     report_intent = classification_report(ref_intents, hyp_intents, 
                                           zero_division=False, output_dict=True)
@@ -107,10 +82,7 @@ def collate_fn(data, PAD_TOKEN = 0, device = "cuda:0" if torch.cuda.is_available
         merge from batch * sent_len to batch * max_len 
         '''
         lengths = [len(seq) for seq in sequences]
-        # max_len = 1 if max(lengths)==0 else max(lengths)
-        max_len = 52
-        # print("\n\nmax_len")
-        # print(max_len)
+        max_len = IntentsAndSlots.Max_len
         # Pad token is zero in our case
         # So we create a matrix full of PAD_TOKEN (i.e. 0) with the shape 
         # batch_size X maximum length of a sequence
@@ -189,11 +161,6 @@ def train_and_eval(lang, train_loader, dev_loader, test_loader, bidirectional=Fa
 
     out_slot = len(lang.slot2id)
     out_int = len(lang.intent2id)
-
-    # print("\n\nOut_slot")
-    # print(out_slot)
-    # print("\n\nOut_int")
-    # print(out_int)
 
     runs = 5
     slot_f1s, intent_acc = [], []

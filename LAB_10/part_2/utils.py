@@ -8,10 +8,6 @@ import torch
 import torch.utils.data as data
 
 def load_data(path):
-    '''
-        input: path/to/data
-        output: json 
-    '''
     dataset = []
     with open(path) as f:
         dataset = json.loads(f.read())
@@ -50,9 +46,7 @@ def split_data(tmp_train_raw, test_raw):
     X_train.extend(mini_Train)
     train_raw = X_train
     dev_raw = X_dev
-
-    # y_test = [x['intent'] for x in test_raw]
-
+    
     return train_raw, dev_raw, test_raw
 
 
@@ -85,12 +79,13 @@ class Lang():
     
 
 class IntentsAndSlots (data.Dataset):
+    Max_len = 1
     # Mandatory methods are __init__, __len__ and __getitem__
     def __init__(self, dataset, lang, max_len, tokenizer, unk='unk'):
+        IntentsAndSlots.Max_len = max_len
         self.utterances = []
         self.intents = []
         self.slots = []
-        self.max_len = max_len
         self.tokenizer = tokenizer
         self.unk = unk
         
@@ -108,13 +103,9 @@ class IntentsAndSlots (data.Dataset):
 
     def __getitem__(self, idx):
         utt = self.utterances[idx]
-        # print("\n\n")
-        # print(len(utt))
-        # print(utt)
-        # print("\n\n")
         encodings = self.tokenizer.encode_plus(
             utt,
-            max_length=self.max_len,
+            max_length=IntentsAndSlots.Max_len,
             add_special_tokens=True,
             padding='max_length',
             truncation=False,
@@ -124,14 +115,8 @@ class IntentsAndSlots (data.Dataset):
         )
         
         ids = encodings['input_ids'][0]
-        # print("\nLen ids")
-        # print(len(ids))
-        # print(ids)
-        # print("\n\n")
         mask = encodings['attention_mask'][0]
-        if ids.size() != mask.size():
-            print("mannaggia")
-
+        
         utt = torch.Tensor(self.utt_ids[idx])
         slots = torch.Tensor(self.slot_ids[idx])
         intent = self.intent_ids[idx]

@@ -18,10 +18,8 @@ class MyBERT(nn.Module):
         pool_output = output.pooler_output # for intent classification
         
         slots = self.dropout(self.slot_out(last_hidden))
-        # print("\n\nmodel slots", slots.size())
         intent = self.dropout(self.intent_out(pool_output))
-        # print("model intent", intent.size())
-
+        
         # Slot size: seq_len, batch size, calsses 
         slots = slots.permute(0,2,1) # We need this for computing the loss
         # Slot size: batch_size, classes, seq_len
