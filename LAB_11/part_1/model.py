@@ -3,9 +3,9 @@ import torch.nn as nn
 from transformers import BertModel
 
 
-class BERT_task1(nn.Module):
+class MyBERT(nn.Module):
     def __init__(self):
-        super(BERT_task1, self).__init__()
+        super(MyBERT, self).__init__()
 
         self.bert = BertModel.from_pretrained('bert-base-uncased')
         self.label_out = nn.Linear(self.bert.config.hidden_size, 2)
@@ -19,6 +19,6 @@ class BERT_task1(nn.Module):
         return label
     
 
-def save_model(model):
-    path = "bin/model.pt"
+def save_model(model, name):
+    path = "bin/" + name + ".pt"
     torch.save(model.state_dict(), path)

@@ -1,1 +1,6 @@
-model.pt filter=lfs diff=lfs merge=lfs -text
+.pt filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+model_1.pt filter=lfs diff=lfs merge=lfs -text
+model_2.pt filter=lfs diff=lfs merge=lfs -text
+model_3.pt filter=lfs diff=lfs merge=lfs -text
+model_4.pt filter=lfs diff=lfs merge=lfs -text

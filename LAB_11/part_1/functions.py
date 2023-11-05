@@ -9,27 +9,64 @@ from conll import evaluate
 from sklearn.metrics import classification_report
 from transformers import BertTokenizer
 from torch.nn.utils.rnn import pad_sequence
-
-
-def get_datasets(train_raw, test_raw):
-    dataset = train_raw + test_raw  
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    max_len = max([len(tokenizer.encode(sent)) for (sent, _) in dataset])
-    lang = Lang(subjectivity.words(), subjectivity.categories(), cutoff=0)
-    train_dataset = SubjAndObj(train_raw, max_len, tokenizer, lang)
-    test_dataset = SubjAndObj(test_raw, max_len, tokenizer, lang)
-
-    return train_dataset, test_dataset
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
 
 
 def get_dataloaders(train_dataset, test_dataset):
-    train_loader = DataLoader(train_dataset, batch_size=128, collate_fn=collate_fn, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=64, collate_fn=collate_fn)
+    train_loader = DataLoader(train_dataset, batch_size=64, collate_fn=collate_fn, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=32, collate_fn=collate_fn)
 
     return train_loader, test_loader
 
 
-def train_and_eval(train_loader, test_loader, min_loss):
+def remove_objective(dataset, labels):
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    res_dataset = dataset.copy()
+    res_labels = labels.copy()
+    res_dataset = dataset[:]
+    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+
+    model = MyBERT().to(device)
+    path = "bin/model_1.pt"
+    model.load_state_dict(torch.load(path))
+
+    import time
+    print("sto tokenizzando")
+    print(len(dataset))
+    i = 0
+    for idx, sent in enumerate(dataset):
+        i = i + 1
+        if i % 500 == 0: 
+            print(i)
+        inputs = tokenizer.encode_plus(
+            sent,
+            max_length=512,
+            add_special_tokens=True,
+            padding='max_length',
+            return_attention_mask=True,
+            return_token_type_ids=False,
+            return_tensors='pt'
+        )
+        
+        ids = inputs['input_ids'].to(device)
+        mask = inputs['attention_mask'].to(device)
+        label = model(ids, mask)
+        out_label = torch.argmax(label, dim=1)
+        
+        if out_label == 1:          
+            res_dataset.remove(sent)
+            res_labels[idx] = ""
+
+    res_labels = [s for s in res_labels if s.strip() != ""]
+    
+    print("ho finito")
+    print(len(dataset), len(res_dataset), len(res_labels))
+    return res_dataset, res_labels
+
+
+def train_and_eval(train_loader, test_loader, min_loss, name):
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     
     lr = 0.0001 # learning rate
@@ -38,28 +75,29 @@ def train_and_eval(train_loader, test_loader, min_loss):
     acc = []
 
     for x in tqdm(range(0, runs)):
-        model = BERT_task1().to(device)
+        model = MyBERT().to(device)
         
         optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion_labels = nn.CrossEntropyLoss()
         
-        n_epochs = 2
+        n_epochs = 15
         patience = 3
          
-        for x in range(1,n_epochs):
+        for x in tqdm(range(1,n_epochs)):
             loss = train_loop(train_loader, optimizer, criterion_labels, model)
             curr_loss = np.asarray(loss).mean()
             losses_train.append(curr_loss)
             
             if curr_loss < min_loss:
                 min_loss = curr_loss
-                save_model(model)
+                save_model(model, name)
             else:
                 patience -= 1
             if patience <= 0: 
                 break 
 
         report, _ = eval_loop(test_loader, criterion_labels, model)
+        print("Run:", x, " - Acc:", report["accuracy"])
         acc.append(report["accuracy"])
         
     acc = np.asarray(acc)
