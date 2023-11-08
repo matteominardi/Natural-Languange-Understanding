@@ -1,4 +1,6 @@
 from functions import *
+import nltk
+nltk.download('conll2002')
 from nltk.corpus import conll2002
 
 
