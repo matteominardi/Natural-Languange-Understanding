@@ -64,6 +64,8 @@ from nltk.corpus import movie_reviews
 #     x_train = [remove_stopwords_and_punctuation(sent, stop_words) for sent in x_train]
 #     x_test = [remove_stopwords_and_punctuation(sent, stop_words) for sent in x_test]
 
+#     print("Removed stopwords and punctuation")
+
 #     print(len(x_train), len(y_train))
 
 #     train_raw = list(zip(x_train, y_train))
@@ -93,6 +95,8 @@ for i, (train_index, test_index) in enumerate(skf.split(sents, labels)):
     x_train = [remove_stopwords(sent, stop_words) for sent in x_train]
     x_test = [remove_stopwords(sent, stop_words) for sent in x_test]
 
+    print("Removed stopwords")
+
     print(len(x_train), len(y_train))
 
     train_raw = list(zip(x_train, y_train))
@@ -104,5 +108,5 @@ for i, (train_index, test_index) in enumerate(skf.split(sents, labels)):
     train_dataset, test_dataset = get_datasets_task_2(train_raw, test_raw, movie_reviews)
     train_loader, test_loader = get_dataloaders(train_dataset, test_dataset)
 
-    print("Model 3 for Polarity (removing objective sents) - Iteration:", i)
+    print("Model 4 for Polarity (removing objective sents) - Iteration:", i)
     min_loss = train_and_eval(train_loader, test_loader, min_loss, "model_4")
