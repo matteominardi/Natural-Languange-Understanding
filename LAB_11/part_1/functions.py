@@ -33,7 +33,6 @@ def remove_objective(dataset, labels):
     model.load_state_dict(torch.load(path))
 
     import time
-    print("sto tokenizzando")
     print(len(dataset))
     i = 0
     for idx, sent in enumerate(dataset):
@@ -61,7 +60,6 @@ def remove_objective(dataset, labels):
 
     res_labels = [s for s in res_labels if s.strip() != ""]
     
-    print("ho finito")
     print(len(dataset), len(res_dataset), len(res_labels))
     return res_dataset, res_labels
 
